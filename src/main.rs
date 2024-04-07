@@ -21,92 +21,96 @@ fn main() {
         let input = input.trim();
 
         let parts: Vec<&str> = input.split_whitespace().collect();
-        let command = parts[0];
-        let args = &parts[1..];
 
-        match command {
-            "quit" | "exit" => {
-                println!("");
-                break;
-            }
-
-            "echo" => {
-                echo(args);
-            }
-
-            "clear" => {
-                let _ = Command::new("clear").status();
-                let _ = Command::new("cls").status();
-            }
-
-            "cat" => {
-                if args.len() == 3 {
-                    match cat(args[0], args[1], args[2]) {
-                        Ok(_) => {}
-                        Err(error) => eprintln!("Merging error: {}", error),
+        match parts.get(0) {
+            Some(command) => {
+                let args = &parts[1..];
+                match *command {
+                    "quit" | "exit" => {
+                        println!("");
+                        break;
                     }
-                } else {
-                    println!("Usage: grep [text] [file.txt]");
-                }
-            }
 
-            "cd" => {
-                if args.len() == 1 {
-                    match cd(args[0]) {
-                        Ok(_) => {}
-                        Err(error) => eprintln!("{}", error),
+                    "echo" => {
+                        echo(args);
                     }
-                } else {
-                    cd("").expect("dir not exists");
-                }
-            }
 
-            "grep" => {
-                if args.len() == 2 {
-                    let _ = grep(args[0], args[1]);
-                } else {
-                    println!("Usage: grep [text] [file.txt]");
-                }
-            }
-
-            "cmds" => {
-                cmds();
-            }
-
-            "run" => {
-                if args.len() == 1 {
-                    run(args[0]);
-                } else {
-                    println!("Usage: run [executable] ");
-                }
-            }
-
-            "find" => {
-                if args.len() == 1 {
-                    find(args[0]);
-                } else {
-                    println!("Usage: find [filename] ");
-                }
-            }
-
-            "ls" => {
-                if args.len() == 1 {
-                    match ls(args[0]) {
-                        Ok(()) => {}
-                        Err(error) => eprintln!("something fucked up: {}", error),
+                    "clear" => {
+                        let _ = Command::new("clear").status();
+                        let _ = Command::new("cls").status();
                     }
-                } else {
-                    let dir = env::current_dir();
-                    match ls(&dir.unwrap().to_string_lossy().to_string()) {
-                        Ok(()) => {}
-                        Err(error) => eprintln!("something fucked up: {}", error),
+
+                    "cat" => {
+                        if args.len() == 3 {
+                            match cat(args[0], args[1], args[2]) {
+                                Ok(_) => {}
+                                Err(error) => eprintln!("Merging error: {}", error),
+                            }
+                        } else {
+                            println!("Usage: grep [text] [file.txt]");
+                        }
+                    }
+
+                    "cd" => {
+                        if args.len() == 1 {
+                            match cd(args[0]) {
+                                Ok(_) => {}
+                                Err(error) => eprintln!("{}", error),
+                            }
+                        } else {
+                            cd("").expect("dir not exists");
+                        }
+                    }
+
+                    "grep" => {
+                        if args.len() == 2 {
+                            let _ = grep(args[0], args[1]);
+                        } else {
+                            println!("Usage: grep [text] [file.txt]");
+                        }
+                    }
+
+                    "cmds" => {
+                        cmds();
+                    }
+
+                    "run" => {
+                        if args.len() == 1 {
+                            run(args[0]);
+                        } else {
+                            println!("Usage: run [executable] ");
+                        }
+                    }
+
+                    "find" => {
+                        if args.len() == 1 {
+                            find(args[0]);
+                        } else {
+                            println!("Usage: find [filename] ");
+                        }
+                    }
+
+                    "ls" => {
+                        if args.len() == 1 {
+                            match ls(args[0]) {
+                                Ok(()) => {}
+                                Err(error) => eprintln!("something fucked up: {}", error),
+                            }
+                        } else {
+                            let dir = env::current_dir();
+                            match ls(&dir.unwrap().to_string_lossy().to_string()) {
+                                Ok(()) => {}
+                                Err(error) => eprintln!("something fucked up: {}", error),
+                            }
+                        }
+                    }
+
+                    _ => {
+                        println!("wtf is this command: {}", command);
                     }
                 }
             }
-
-            _ => {
-                println!("wtf is this command: {}", command);
-            }
+            None => println!(),
         }
     }
 }
