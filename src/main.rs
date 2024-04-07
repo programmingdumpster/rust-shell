@@ -10,37 +10,41 @@ use std::io::{ BufRead, BufReader, Result };
 use home::home_dir;
 
 fn main() {
-    cmds();
+    cmds(); // Display available commands
     loop {
-        print!("\n {:?} {:?} #  ", whoami::username(), env::current_dir().unwrap());
-        io::stdout().flush().expect("flushing err");
+        print!("\n {:?} {:?} #  ", whoami::username(), env::current_dir().unwrap()); // Display username and current directory
+        io::stdout().flush().expect("flushing err"); // Flush output buffer
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("input err");
+        io::stdin().read_line(&mut input).expect("input err"); // Read user input
 
         let input = input.trim();
 
-        let parts: Vec<&str> = input.split_whitespace().collect();
+        let parts: Vec<&str> = input.split_whitespace().collect(); // Split input into parts
 
         match parts.get(0) {
             Some(command) => {
                 let args = &parts[1..];
                 match *command {
                     "quit" | "exit" => {
-                        println!("");
+                        // Quit the program
+                        println!();
                         break;
                     }
 
                     "echo" => {
+                        // Echo the input
                         echo(args);
                     }
 
                     "clear" => {
+                        // Clear the console
                         let _ = Command::new("clear").status();
                         let _ = Command::new("cls").status();
                     }
 
                     "cat" => {
+                        // Concatenate two files
                         if args.len() == 3 {
                             match cat(args[0], args[1], args[2]) {
                                 Ok(_) => {}
@@ -52,6 +56,7 @@ fn main() {
                     }
 
                     "cd" => {
+                        // Change directory
                         if args.len() == 1 {
                             match cd(args[0]) {
                                 Ok(_) => {}
@@ -63,6 +68,7 @@ fn main() {
                     }
 
                     "grep" => {
+                        // Search for text in a file
                         if args.len() == 2 {
                             let _ = grep(args[0], args[1]);
                         } else {
@@ -71,10 +77,12 @@ fn main() {
                     }
 
                     "cmds" => {
+                        // Display available commands
                         cmds();
                     }
 
                     "run" => {
+                        // Run an executable
                         if args.len() == 1 {
                             run(args[0]);
                         } else {
@@ -83,6 +91,7 @@ fn main() {
                     }
 
                     "find" => {
+                        // Find a file
                         if args.len() == 1 {
                             find(args[0]);
                         } else {
@@ -91,6 +100,7 @@ fn main() {
                     }
 
                     "ls" => {
+                        // List files in a directory
                         if args.len() == 1 {
                             match ls(args[0]) {
                                 Ok(()) => {}
@@ -116,39 +126,33 @@ fn main() {
 }
 
 fn echo(args: &[&str]) {
+    // Echo function
     let text = args.join(" ");
 
     println!("{}", text)
 }
 
 fn cat(file1: &str, file2: &str, name: &str) -> io::Result<()> {
-    // Otwarcie pierwszego pliku
+    // Concatenate two files
     let mut file1 = File::open(file1)?;
     let mut contents1 = String::new();
     file1.read_to_string(&mut contents1)?;
 
-    // Otwarcie drugiego pliku
     let mut file2 = File::open(file2)?;
     let mut contents2 = String::new();
     file2.read_to_string(&mut contents2)?;
 
-    // Utworzenie pliku wyjściowego
     let mut fileout = File::create(name)?;
 
-    // Złączenie zawartości obu plików
     let data = contents1 + &contents2;
 
-    // Zapis danych do pliku wyjściowego
     fileout.write_all(data.as_bytes())?;
-
-    drop(file1);
-    drop(file2);
-    drop(fileout);
 
     Ok(())
 }
 
 fn ls(path: &str) -> Result<()> {
+    // List files in a directory
     let mut column_w = 0;
     let mut filenames = Vec::new();
     let entries = fs::read_dir(path)?;
@@ -176,6 +180,7 @@ fn ls(path: &str) -> Result<()> {
 }
 
 fn find(item: &str) {
+    // Find a file
     let dir_path = "/";
     let dir_entires = WalkDir::new(dir_path);
 
@@ -188,7 +193,7 @@ fn find(item: &str) {
 }
 
 fn grep(text: &str, file: &str) -> io::Result<()> {
-    // Otwórz plik
+    // Search for text in a file
     let _file1 = File::open(file)?;
     let reader = BufReader::new(_file1);
 
@@ -204,6 +209,7 @@ fn grep(text: &str, file: &str) -> io::Result<()> {
 }
 
 fn cmds() {
+    // Display available commands
     println!(
         "
 
@@ -223,6 +229,7 @@ fn cmds() {
 }
 
 fn cd(dir: &str) -> Result<()> {
+    // Change directory
     let home = home_dir().unwrap().to_string_lossy().to_string();
 
     match dir {
@@ -234,5 +241,6 @@ fn cd(dir: &str) -> Result<()> {
 }
 
 fn run(executable: &str) {
+    // Run an executable
     let _ = Command::new("./".to_owned() + executable).status();
 }
