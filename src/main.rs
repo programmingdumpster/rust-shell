@@ -1,14 +1,14 @@
 #![windows_subsystem = "console"]
-
+#[warn(unused_imports)]
 use std::io::{ self, Read, Write };
 use std::process::Command;
 use std::fs::{ self, File };
-use std::env;
+use std::env::{ self, set_current_dir };
 use walkdir::WalkDir;
-use std::io::{ BufRead, BufReader };
+use std::io::{ BufRead, BufReader, Result };
+use home::home_dir;
 
 fn main() {
-    let _ = Command::new("clear").status();
     cmds();
     loop {
         print!("\n {:?} {:?} #  ", whoami::username(), env::current_dir().unwrap());
@@ -39,9 +39,22 @@ fn main() {
 
             "cat" => {
                 if args.len() == 3 {
-                    cat(args[0], args[1], args[2]);
+                    match cat(args[0], args[1], args[2]) {
+                        Ok(_) => {}
+                        Err(error) => eprintln!("Merging error: {}", error),
+                    }
                 } else {
                     println!("Usage: grep [text] [file.txt]");
+                }
+            }
+
+            "cd" => {
+                if args.len() == 1 {
+                    match cd(args[0]) {
+                        Ok(_) => {}
+                        Err(error) =>
+                            eprint!("Directory doesnt exists {}, error: {}", args[0], error),
+                    }
                 }
             }
 
@@ -50,14 +63,6 @@ fn main() {
                     let _ = grep(args[0], args[1]);
                 } else {
                     println!("Usage: grep [text] [file.txt]");
-                }
-            }
-
-            "cd" => {
-                if args.len() == 1 {
-                    let _ = cd(args[0]);
-                } else {
-                    let _ = cd("/");
                 }
             }
 
@@ -95,18 +100,31 @@ fn echo(args: &[&str]) {
     println!("{}", text)
 }
 
-fn cat(_file1: &str, _file2: &str, _name: &str) {
-    let mut file1 = File::open(_file1).expect("file open err");
+fn cat(file1: &str, file2: &str, name: &str) -> io::Result<()> {
+    // Otwarcie pierwszego pliku
+    let mut file1 = File::open(file1)?;
     let mut contents1 = String::new();
-    file1.read_to_string(&mut contents1).expect("reading err");
+    file1.read_to_string(&mut contents1)?;
 
-    let mut file2 = File::open(_file2).expect("file open err");
+    // Otwarcie drugiego pliku
+    let mut file2 = File::open(file2)?;
     let mut contents2 = String::new();
-    file2.read_to_string(&mut contents2).expect("reading err");
+    file2.read_to_string(&mut contents2)?;
 
-    let mut fileout = File::create(_name).expect("creating err");
+    // Utworzenie pliku wyjściowego
+    let mut fileout = File::create(name)?;
+
+    // Złączenie zawartości obu plików
     let data = contents1 + &contents2;
-    fileout.write_all(data.as_bytes()).expect("cant write err")
+
+    // Zapis danych do pliku wyjściowego
+    fileout.write_all(data.as_bytes())?;
+
+    drop(file1);
+    drop(file2);
+    drop(fileout);
+
+    Ok(())
 }
 
 fn ls(path: &str) {
@@ -120,7 +138,7 @@ fn ls(path: &str) {
             }
         }
     } else {
-        println!("Blad odczytu folderu ");
+        eprintln!("Data reading error");
     }
 }
 
@@ -171,6 +189,13 @@ fn cmds() {
     );
 }
 
-fn cd(dir: &str) -> Result<(), std::io::Error> {
-    env::set_current_dir(dir)
+fn cd(dir: &str) -> Result<()> {
+    let home = home_dir().unwrap().to_string_lossy().to_string();
+
+    match dir {
+        "" => set_current_dir(home)?,
+        ".." => set_current_dir("..")?,
+        _ => set_current_dir(dir)?,
+    }
+    Ok(())
 }
