@@ -1,4 +1,5 @@
 #![windows_subsystem = "console"]
+
 #[warn(unused_imports)]
 use std::io::{ self, Read, Write };
 use std::process::Command;
@@ -35,6 +36,7 @@ fn main() {
 
             "clear" => {
                 let _ = Command::new("clear").status();
+                let _ = Command::new("cls").status();
             }
 
             "cat" => {
@@ -52,9 +54,10 @@ fn main() {
                 if args.len() == 1 {
                     match cd(args[0]) {
                         Ok(_) => {}
-                        Err(error) =>
-                            eprint!("Directory doesnt exists {}, error: {}", args[0], error),
+                        Err(error) => eprintln!("{}", error),
                     }
+                } else {
+                    cd("").expect("dir not exists");
                 }
             }
 
@@ -70,6 +73,14 @@ fn main() {
                 cmds();
             }
 
+            "run" => {
+                if args.len() == 1 {
+                    run(args[0]);
+                } else {
+                    println!("Usage: run [executable] ");
+                }
+            }
+
             "find" => {
                 if args.len() == 1 {
                     find(args[0]);
@@ -80,10 +91,16 @@ fn main() {
 
             "ls" => {
                 if args.len() == 1 {
-                    ls(args[0]);
+                    match ls(args[0]) {
+                        Ok(()) => {}
+                        Err(error) => eprintln!("something fucked up: {}", error),
+                    }
                 } else {
-                    let dir = env::current_dir().unwrap().to_string_lossy().to_string();
-                    ls(&dir);
+                    let dir = env::current_dir();
+                    match ls(&dir.unwrap().to_string_lossy().to_string()) {
+                        Ok(()) => {}
+                        Err(error) => eprintln!("something fucked up: {}", error),
+                    }
                 }
             }
 
@@ -127,19 +144,31 @@ fn cat(file1: &str, file2: &str, name: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn ls(path: &str) {
-    if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let file_name = entry.file_name();
-                if let Some(file_name) = file_name.to_str() {
-                    print!(" {} ", file_name);
-                }
-            }
-        }
-    } else {
-        eprintln!("Data reading error");
+fn ls(path: &str) -> Result<()> {
+    let mut column_w = 0;
+    let mut filenames = Vec::new();
+    let entries = fs::read_dir(path)?;
+
+    for entry in entries {
+        let entry = entry?;
+        let filename_str = entry.file_name().to_string_lossy().to_string();
+        column_w = column_w.max(filename_str.len());
+        filenames.push(filename_str);
     }
+
+    let terminal_w = term_size::dimensions().map_or(80, |(w, _)| w);
+    let n_colums = terminal_w / (column_w + 2);
+
+    for (i, filename) in filenames.into_iter().enumerate() {
+        print!("{:width$}", filename, width = column_w);
+        if (i + 1) % n_colums == 0 {
+            println!();
+        } else {
+            print!("   ");
+        }
+    }
+
+    Ok(())
 }
 
 fn find(item: &str) {
@@ -149,7 +178,7 @@ fn find(item: &str) {
     for entry in dir_entires.into_iter().filter_map(|e| e.ok()) {
         if entry.file_name().to_string_lossy().to_lowercase() == item.to_lowercase() {
             let path = entry.path().to_string_lossy().to_string();
-            println!("{}", path);
+            println!("{:<6}", path);
         }
     }
 }
@@ -193,9 +222,13 @@ fn cd(dir: &str) -> Result<()> {
     let home = home_dir().unwrap().to_string_lossy().to_string();
 
     match dir {
-        "" => set_current_dir(home)?,
         ".." => set_current_dir("..")?,
+        "" => set_current_dir(home)?,
         _ => set_current_dir(dir)?,
     }
     Ok(())
+}
+
+fn run(executable: &str) {
+    let _ = Command::new("./".to_owned() + executable).status();
 }
