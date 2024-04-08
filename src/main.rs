@@ -73,7 +73,7 @@ fn main() {
                     "find" => {
                         // Find a file
                         match args.len() {
-                            1 => if let Err(error) = find(args[0], PathBuf::from(args[1])) {
+                            2 => if let Err(error) = find(args[0], PathBuf::from(args[1])) {
                                 eprintln!("finding error: {}", error);
                             }
                             _ => println!("Usage: find [item]"),
