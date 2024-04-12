@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 execute = "0.2.13"
 home = "0.5.9"
+nu-ansi-term = "0.50.0"
 os = "0.1.0"
 sysinfo = "0.30.9"
 term_size = "0.3.2"

@@ -5,6 +5,8 @@ use std::{
     path::PathBuf,
 };
 
+#[allow(unused_imports)]
+use nu_ansi_term::Color::*;
 use walkdir::WalkDir;
 
 pub fn echo(args: &[&str]) -> io::Result<()> {
@@ -40,9 +42,10 @@ pub fn ls(path: PathBuf) -> io::Result<()> {
     let mut column_w = 0;
     let mut filenames = Vec::new();
     let entries = fs::read_dir(path)?;
-
+    //Pushing names to vector, getting width for column
     for entry in entries {
         let entry = entry?;
+
         let filename_str = entry.file_name().to_string_lossy().to_string();
         column_w = column_w.max(filename_str.len());
         filenames.push(filename_str);

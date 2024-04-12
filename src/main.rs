@@ -1,16 +1,25 @@
 #![windows_subsystem = "console"]
 
 mod commands;
+use nu_ansi_term::Color::*;
 use std::io::{ self, Write };
 use std::path::PathBuf;
 use std::process::Command;
 use std::env::{ self };
 use commands::*;
 use sysinfo::System;
+use whoami::*;
 
 fn main() {
+    let name = Red.bold().paint(username());
+
     loop {
-        print!("\n {:?} {:?} #  ", whoami::username(), env::current_dir().unwrap()); // Display username and current directory
+        print!(
+            "\n {} | {} | {}  ",
+            name,
+            White.bold().paint(env::current_dir().unwrap().to_string_lossy().to_string()),
+            White.bold().paint("→")
+        ); // Display username and current directory
         io::stdout().flush().expect("flushing err"); // Flush output buffer
 
         let mut input = String::new();
@@ -32,11 +41,11 @@ fn main() {
 
                     "echo" => {
                         // Echo the input
-                        match args.len() {
-                            1 => if let Err(error) = echo(args) {
-                                eprintln!("Directory reading error: {}", error);
-                            }
-                            _ => println!("Usage: echo [text]"),
+                        if let Err(error) = echo(args) {
+                            eprintln!(
+                                "Directory reading error: {}",
+                                Red.bold().paint(error.to_string())
+                            );
                         }
                     }
 
@@ -44,9 +53,13 @@ fn main() {
                         // Merges files
                         match args.len() {
                             3 => if let Err(error) = cat(args[0], args[1], args[2]) {
-                                eprintln!("Merging error: {}", error);
+                                eprintln!("Merging error: {}", Red.bold().paint(error.to_string()));
                             }
-                            _ => println!("Usage: cat [file1] [file2] [output_file]"),
+                            _ =>
+                                println!(
+                                    "{}",
+                                    Red.bold().paint("Usage: cat [file1] [file2] [output_file]")
+                                ),
                         }
                     }
 
@@ -54,9 +67,12 @@ fn main() {
                         // Change directory
                         match args.len() {
                             1 => if let Err(error) = cd(args[0]) {
-                                eprintln!("Dir changing error: {}", error);
+                                eprintln!(
+                                    "Dir changing error: {}",
+                                    Red.bold().paint(error.to_string())
+                                );
                             }
-                            _ => println!("Usage: cd [directory] "),
+                            _ => println!("{}", Red.bold().paint("Usage: cd [directory]")),
                         }
                     }
 
@@ -64,9 +80,9 @@ fn main() {
                         // Search for text in a file
                         match args.len() {
                             2 => if let Err(error) = grep(args[0], args[1]) {
-                                eprintln!("Grep error: {}", error);
+                                eprintln!("Grep error: {}", Red.bold().paint(error.to_string()));
                             }
-                            _ => println!("Usage: grep [text] [file.txt]"),
+                            _ => println!("{}", Red.bold().paint("Usage: grep [text] [file.txt]")),
                         }
                     }
 
@@ -74,9 +90,9 @@ fn main() {
                         // Find a file
                         match args.len() {
                             2 => if let Err(error) = find(args[0], PathBuf::from(args[1])) {
-                                eprintln!("finding error: {}", error);
+                                eprintln!("finding error: {}", Red.bold().paint(error.to_string()));
                             }
-                            _ => println!("Usage: find [item]"),
+                            _ => println!("{}", Red.bold().paint("Usage: find [item]")),
                         }
                     }
 
@@ -85,14 +101,20 @@ fn main() {
 
                         match args.len() {
                             1 => if let Err(error) = ls(PathBuf::from(args[0])) {
-                                eprintln!("File reading error: {}", error);
+                                eprintln!(
+                                    "File reading error: {}",
+                                    Red.bold().paint(error.to_string())
+                                );
                             }
 
                             0 => if let Err(error) = ls(PathBuf::from(env::current_dir().unwrap())) {
-                                eprintln!("File reading error: {}", error);
+                                eprintln!(
+                                    "File reading error: {}",
+                                    Red.bold().paint(error.to_string())
+                                );
                             }
 
-                            _ => println!("Usage: grep [text] [file.txt]"),
+                            _ => println!("{}", Red.bold().paint("Usage: grep [text] [file.txt]")),
                         }
                     }
 
@@ -138,7 +160,11 @@ fn main() {
                     }
 
                     _ => {
-                        println!("Unknown command: {}", command);
+                        println!(
+                            "{} {}",
+                            White.bold().paint("Unknown command:"),
+                            Red.bold().paint(command.to_string())
+                        );
                     }
                 }
             }
