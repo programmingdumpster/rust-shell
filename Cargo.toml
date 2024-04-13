@@ -5,8 +5,7 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-execute = "0.2.13"
+[dependencies] 
 home = "0.5.9"
 nu-ansi-term = "0.50.0"
 os = "0.1.0"

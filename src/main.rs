@@ -2,30 +2,29 @@
 
 mod commands;
 use nu_ansi_term::Color::*;
+
 use std::io::{ self, Write };
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{ Command, Stdio };
 use std::env::{ self };
 use commands::*;
 use sysinfo::System;
 use whoami::*;
 
 fn main() {
-    let name = Red.bold().paint(username());
-
     loop {
         print!(
             "\n {} | {} | {}  ",
-            name,
-            White.bold().paint(env::current_dir().unwrap().to_string_lossy().to_string()),
-            White.bold().paint("→")
+            LightPurple.bold().paint(username()),
+            White.paint(env::current_dir().unwrap().to_string_lossy()),
+            LightPurple.bold().paint("➡")
         ); // Display username and current directory
         io::stdout().flush().expect("flushing err"); // Flush output buffer
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("input err"); // Read user input
+        io::stdin().read_line(&mut input).expect("err"); // Read user input
 
-        let input = input.trim();
+        let input = input.trim_end_matches("\r").trim();
 
         let parts: Vec<&str> = input.split_whitespace().collect(); // Split input into parts
 
@@ -159,12 +158,13 @@ fn main() {
                         }
                     }
 
-                    _ => {
-                        println!(
-                            "{} {}",
-                            White.bold().paint("Unknown command:"),
-                            Red.bold().paint(command.to_string())
-                        );
+                    command => {
+                        let child = Command::new(command).args(args).stdout(Stdio::piped()).spawn();
+
+                        match child {
+                            Ok(_) => {}
+                            Err(e) => eprintln!("  {}", e),
+                        }
                     }
                 }
             }
